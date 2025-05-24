@@ -19,12 +19,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ADC_CHANNELS 7
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,6 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint16_t adc_values[ADC_CHANNELS];
+char msg[100] = {'\0'};
 
 /* USER CODE END PV */
 
@@ -56,6 +60,19 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/**
+ * callback function for completed conversion of all 7 channels
+ */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
+  scanf(msg, "IN6: %u, IN7: %u, IN8: %u, IN9: %u, IN10: %u, IN11: %u, IN12: %u\r\n", 
+    adc_values[0], adc_values[1], adc_values[2], adc_values[3], adc_values[4], adc_values[5], adc_values[6]);
+
+  HAL_UART_Transmit(&huart2, msg, strlen(msg), 100);
+
+  HAL_ADC_Start_DMA(hadc, (uint32_t)*adc_values, ADC_CHANNELS);
+}
+
 
 /* USER CODE END 0 */
 
@@ -88,10 +105,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc_values, ADC_CHANNELS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
